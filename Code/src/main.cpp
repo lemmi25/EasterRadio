@@ -19,15 +19,25 @@
 
 
 #include <radio_display.h>
+#include <radio_encoder.h>
 
 
 void setup(void) {
+
+  Serial.begin(9600);
+  
   radio_display_init();
+  rotary_init();
 }
 
 void loop() {
 
   radio_display_update();
+
+  rotary_loop();
+	
+	delay(50);															 
+	if (millis()>20000) rotary_enable();
   
 }
 

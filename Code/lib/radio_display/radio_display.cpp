@@ -27,7 +27,7 @@ void radio_display_init(){
   //tft.fillScreen(TFT_BLACK);
   //tft.fillScreen(TFT_RED);
   //tft.fillScreen(TFT_GREEN);
-  //tft.fillScreen(TFT_BLUE);
+  //tft.fillScreen(TFT_BLU#define TFT_GREY 0x5AEBE);
   //tft.fillScreen(TFT_BLACK);
   tft.fillScreen(TFT_GREY);
   
