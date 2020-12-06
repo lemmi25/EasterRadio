@@ -19,14 +19,21 @@ uint8_t hh=conv2d(__TIME__), mm=conv2d(__TIME__+3), ss=conv2d(__TIME__+6);  // G
 
 boolean initial = 1;
 
+int cur_state = 0;
+int cur_substate = 0;
+int cur_sub_level = 0;
+
 void radio_display_init(){
 
   tft.init();
-  tft.setRotation(0);
-  
+  tft.setRotation(1);
+  //tft.fillScreen(TFT_GREEN);
+
+  //show_menu_1();
+  /*
   //tft.fillScreen(TFT_BLACK);
   //tft.fillScreen(TFT_RED);
-  //tft.fillScreen(TFT_GREEN);
+  
   //tft.fillScreen(TFT_BLU#define TFT_GREY 0x5AEBE);
   //tft.fillScreen(TFT_BLACK);
   tft.fillScreen(TFT_GREY);
@@ -71,66 +78,223 @@ void radio_display_init(){
   tft.drawCentreString("Time flies",120,260,4);
 
   targetTime = millis() + 1000; 
-
+*/
 }
 
 
-void radio_display_update()
+void radio_display_update(int rotary_number)
 
 {
+    //Handle Rotation with Encoder for Menu Item Switching
+    /*State Machine*/
 
-    if (targetTime < millis()) {
-    targetTime += 1000;
-    ss++;              // Advance second
-    if (ss==60) {
-      ss=0;
-      mm++;            // Advance minute
-      if(mm>59) {
-        mm=0;
-        hh++;          // Advance hour
-        if (hh>23) {
-          hh=0;
+   if(cur_sub_level == 0)
+   {
+    /*State Machine for Main Menu Scrolling*/
+    switch(cur_state){
+
+        case 1:
+           {
+            Serial.println("changing to 2");
+            show_menu_2();  
+            cur_state = 2;
+            break;
+           }
+        case 2:
+        {
+            Serial.println("changing to 1");
+            show_menu_1();
+            cur_state = 1;
+            break;
         }
-      }
+        default:
+        {
+            show_menu_1();
+            cur_state = 1;
+            break;
+        }
+    } 
+   }
+   else if (cur_sub_level == 1 && cur_state == 1)
+   {
+       /*State Machine for Sub menue Scrolling, menu 1*/
+    switch(cur_substate){
+
+        case 1:
+           {
+            Serial.println("changing to 2");
+            show_sub_menu_back();  
+            cur_substate = 2;
+            break;
+           }
+        case 2:
+        {
+            Serial.println("changing to 1");
+            show_sub_menu_1();
+            cur_substate = 1;
+            break;
+        }
+        default:
+        {
+            show_sub_menu_1();
+            cur_substate = 1;
+            break;
+        }
     }
 
-    // Pre-compute hand degrees, x & y coords for a fast screen update
-    sdeg = ss*6;                  // 0-59 -> 0-354
-    mdeg = mm*6+sdeg*0.01666667;  // 0-59 -> 0-360 - includes seconds
-    hdeg = hh*30+mdeg*0.0833333;  // 0-11 -> 0-360 - includes minutes and seconds
-    hx = cos((hdeg-90)*0.0174532925);    
-    hy = sin((hdeg-90)*0.0174532925);
-    mx = cos((mdeg-90)*0.0174532925);    
-    my = sin((mdeg-90)*0.0174532925);
-    sx = cos((sdeg-90)*0.0174532925);    
-    sy = sin((sdeg-90)*0.0174532925);
+   }
+   else if (cur_sub_level == 1 && cur_state == 2)
+   {
+    /*State Machine for Sub menue Scrolling, menu 2*/
+    switch(cur_substate){
 
-    if (ss==0 || initial) {
-      initial = 0;
-      // Erase hour and minute hand positions every minute
-      tft.drawLine(ohx, ohy, 120, 121, TFT_BLACK);
-      ohx = hx*62+121;    
-      ohy = hy*62+121;
-      tft.drawLine(omx, omy, 120, 121, TFT_BLACK);
-      omx = mx*84+120;    
-      omy = my*84+121;
+        case 1:
+           {
+            Serial.println("changing to 2");
+            show_sub_menu_back();  
+            cur_substate = 2;
+            break;
+           }
+        case 2:
+        {
+            Serial.println("changing to 1");
+            show_sub_menu_2();
+            cur_substate = 1;
+            break;
+        }
+        default:
+        {
+            show_sub_menu_2();
+            cur_substate = 1;
+            break;
+        }
     }
+   }
+}
 
-    // Redraw new hand positions, hour and minute hands not erased here to avoid flicker
-    tft.drawLine(osx, osy, 120, 121, TFT_BLACK);
-    osx = sx*90+121;    
-    osy = sy*90+121;
-    tft.drawLine(osx, osy, 120, 121, TFT_RED);
-    tft.drawLine(ohx, ohy, 120, 121, TFT_WHITE);
-    tft.drawLine(omx, omy, 120, 121, TFT_WHITE);
-    tft.drawLine(osx, osy, 120, 121, TFT_RED);
+void radio_display_clicked(){
 
-    tft.fillCircle(120, 121, 3, TFT_RED);
-  }
+    //Handle Button Clicked for Menu items --> change menu level
+
+   Serial.println("evaluate button clicked... ");
+   if(cur_sub_level == 1)
+   {
+       /*State Machine For SubMenu Clicks*/
+       switch(cur_substate)
+       {
+           case 1:
+            break;
+           case 2: 
+           {
+               if(cur_state == 1)
+               {
+                   show_menu_1();
+                   cur_sub_level = 0;
+               }
+               else if (cur_state ==2)
+               {
+                 show_menu_2();
+                 cur_sub_level = 0;
+               }
+               break;
+           }
+       }
+   }
+   else if (cur_sub_level == 0)
+   {
+       /*State Machine for Main Menu Clicks*/
+       switch(cur_state)
+       {
+           case 1:
+           {
+            cur_substate = 1;
+            cur_sub_level = 1;
+            show_sub_menu_1();
+            break;
+           }
+           case 2:
+           {
+            cur_substate = 2;
+            cur_sub_level = 1;
+            show_sub_menu_2();
+            break;
+           }
+       }
+
+   }
+}
 
 
+void show_menu_1(){
+
+  // Fill screen with grey so we can see the effect of printing with and without 
+  // a background colour defined
+  tft.fillScreen(TFT_GREY);
+  
+  // Set "cursor" at top left corner of display (0,0) and select font 2
+  // (cursor will move to next line automatically during printing with 'tft.println'
+  //  or stay on the line is there is room for the text with tft.print)
+  tft.setCursor(0, 0, 2);
+
+  // Test some print formatting functions
+   // Set the font colour to be blue with no background, set to font 4
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("WELCOME",130,100,4);
+  //tft.print("R = "); tft.println(rotary_number);           // Print floating point number
+  //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
+  //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
+  //delay(5000);
 
 }
+
+void show_menu_2(){
+
+  // Fill screen with grey so we can see the effect of printing with and without 
+  // a background colour defined
+  tft.fillScreen(TFT_RED);
+  
+  // Set "cursor" at top left corner of display (0,0) and select font 2
+  // (cursor will move to next line automatically during printing with 'tft.println'
+  //  or stay on the line is there is room for the text with tft.print)
+  tft.setCursor(0, 0, 2);
+
+  // Test some print formatting functions
+  float fnumber = 123.45;
+   // Set the font colour to be blue with no background, set to font 4
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("MORITZ",110,100,4);
+  //tft.print("R = "); tft.println(fnumber);           // Print floating point number
+  //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
+  //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
+  //delay(5000);
+    
+}
+
+void show_sub_menu_1(){
+  tft.fillScreen(TFT_RED);
+
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("Submenu1",140,100,4);
+
+}
+
+void show_sub_menu_2(){
+      tft.fillScreen(TFT_RED);
+
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("Submenu2",140,100,4);
+
+}
+
+void show_sub_menu_back(){
+      tft.fillScreen(TFT_RED);
+
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("Return",140,100,4);
+
+}
+
+
 
 static uint8_t conv2d(const char* p) {
   uint8_t v = 0;

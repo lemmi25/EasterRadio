@@ -25,18 +25,29 @@
 void setup(void) {
 
   Serial.begin(9600);
-  
+
   radio_display_init();
   rotary_init();
 }
 
+
 void loop() {
 
-  radio_display_update();
+  int rotary_value  =  rotary_loop();
 
-  rotary_loop();
+
+  if(rotary_value){
+    Serial.println("Display Update");
+    radio_display_update(rotary_value);
+  }
+
+  if(get_button_clicked_state() == true)
+  {
+    set_button_clicked_state(false);
+    radio_display_clicked();
+  }
 	
-	delay(50);															 
+	delay(100);															 
 	if (millis()>20000) rotary_enable();
   
 }

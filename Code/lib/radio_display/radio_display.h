@@ -4,5 +4,14 @@
 
 
 void radio_display_init(void);
-void radio_display_update(void);
+void radio_display_update(int rotary_number);
+void radio_display_clicked(void);
 
+void show_menu_1(void);
+void show_menu_2(void);
+
+void show_sub_menu_1(void);
+
+void show_sub_menu_2(void);
+
+void show_sub_menu_back(void);
