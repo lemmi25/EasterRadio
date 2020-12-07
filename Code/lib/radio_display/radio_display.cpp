@@ -91,20 +91,54 @@ void radio_display_update(int rotary_number)
     /*State Machine*/
 
     Serial.print("cur menu state = ");
-    Serial.println(cur_menu_state);
+    Serial.print(cur_menu_state);
+    Serial.print(", rot = ");
+    Serial.println(rotary_number);
+
+    bool cw = rotary_number > 0 ? 1:0;
+
     switch (cur_menu_state)
     {
       case 10:
       {
-        cur_menu_state = 20;
-        show_menu_2();
+        if(cw)
+        {
+          cur_menu_state = 20;
+          show_menu_2();
+        }
+        else
+        {
+          cur_menu_state = 30;
+          show_menu_3(); 
+        }
         break;
       }
       case 20:
       {
-        cur_menu_state = 10;
-        show_menu_1();
-
+        if(cw)
+        {
+          cur_menu_state = 30;
+          show_menu_3();
+        }
+        else
+        {
+          cur_menu_state = 10;
+          show_menu_1();
+        }
+        break;
+      }
+      case 30:
+      {
+        if(cw)
+        {
+          cur_menu_state = 10;
+          show_menu_1();
+        }
+        else
+        {
+          cur_menu_state = 20;
+          show_menu_2();
+        }
         break;
       }
       case 11:
@@ -156,6 +190,10 @@ void radio_display_clicked(){
 
         break;
       }
+      case 30:
+      {
+        break;
+      }
       case 11:
       {
         break;
@@ -194,7 +232,7 @@ void show_menu_1(){
   // Test some print formatting functions
    // Set the font colour to be blue with no background, set to font 4
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("WELCOME",130,100,4);
+  tft.drawCentreString("WELCOME - 1",140,100,4);
   //tft.print("R = "); tft.println(rotary_number);           // Print floating point number
   //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
   //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
@@ -217,13 +255,41 @@ void show_menu_2(){
   float fnumber = 123.45;
    // Set the font colour to be blue with no background, set to font 4
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("MORITZ",110,100,4);
+  tft.drawCentreString("MORITZ - 2",130,100,4);
   //tft.print("R = "); tft.println(fnumber);           // Print floating point number
   //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
   //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
   //delay(5000);
     
 }
+
+
+void show_menu_3(){
+
+  // Fill screen with grey so we can see the effect of printing with and without 
+  // a background colour defined
+  tft.fillScreen(TFT_RED);
+  
+  // Set "cursor" at top left corner of display (0,0) and select font 2
+  // (cursor will move to next line automatically during printing with 'tft.println'
+  //  or stay on the line is there is room for the text with tft.print)
+  tft.setCursor(0, 0, 2);
+
+  // Test some print formatting functions
+  float fnumber = 123.45;
+   // Set the font colour to be blue with no background, set to font 4
+  tft.setTextColor(TFT_DARKGREEN);    tft.setTextFont(4);
+  tft.drawCentreString("SETTINGS - 3",130,100,4);
+  //tft.print("R = "); tft.println(fnumber);           // Print floating point number
+  //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
+  //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
+  //delay(5000);
+    
+}
+
+
+
+
 
 void show_sub_menu_1(){
   tft.fillScreen(TFT_RED);

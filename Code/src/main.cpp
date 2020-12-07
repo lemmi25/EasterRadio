@@ -47,7 +47,7 @@ void loop() {
     radio_display_clicked();
   }
 	
-	delay(100);															 
+	delay(200);															 
 	if (millis()>20000) rotary_enable();
   
 }

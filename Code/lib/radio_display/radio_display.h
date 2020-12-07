@@ -9,6 +9,7 @@ void radio_display_clicked(void);
 
 void show_menu_1(void);
 void show_menu_2(void);
+void show_menu_3(void);
 
 void show_sub_menu_1(void);
 

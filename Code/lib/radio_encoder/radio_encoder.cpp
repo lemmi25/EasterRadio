@@ -61,7 +61,8 @@ int rotary_loop() {
 		Serial.println(encoderValue);
 	} 
 
-    return encoderValue;
+    //return encoderValue;
+    return encoderDelta;
 	
 }
 
