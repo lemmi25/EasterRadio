@@ -23,6 +23,8 @@ int cur_state = 0;
 int cur_substate = 0;
 int cur_sub_level = 0;
 
+int cur_menu_state = 10;
+
 void radio_display_init(){
 
   tft.init();
@@ -88,88 +90,48 @@ void radio_display_update(int rotary_number)
     //Handle Rotation with Encoder for Menu Item Switching
     /*State Machine*/
 
-   if(cur_sub_level == 0)
-   {
-    /*State Machine for Main Menu Scrolling*/
-    switch(cur_state){
+    Serial.print("cur menu state = ");
+    Serial.println(cur_menu_state);
+    switch (cur_menu_state)
+    {
+      case 10:
+      {
+        cur_menu_state = 20;
+        show_menu_2();
+        break;
+      }
+      case 20:
+      {
+        cur_menu_state = 10;
+        show_menu_1();
 
-        case 1:
-           {
-            Serial.println("changing to 2");
-            show_menu_2();  
-            cur_state = 2;
-            break;
-           }
-        case 2:
-        {
-            Serial.println("changing to 1");
-            show_menu_1();
-            cur_state = 1;
-            break;
-        }
-        default:
-        {
-            show_menu_1();
-            cur_state = 1;
-            break;
-        }
-    } 
-   }
-   else if (cur_sub_level == 1 && cur_state == 1)
-   {
-       /*State Machine for Sub menue Scrolling, menu 1*/
-    switch(cur_substate){
-
-        case 1:
-           {
-            Serial.println("changing to 2");
-            show_sub_menu_back();  
-            cur_substate = 2;
-            break;
-           }
-        case 2:
-        {
-            Serial.println("changing to 1");
-            show_sub_menu_1();
-            cur_substate = 1;
-            break;
-        }
-        default:
-        {
-            show_sub_menu_1();
-            cur_substate = 1;
-            break;
-        }
+        break;
+      }
+      case 11:
+      {
+        cur_menu_state = 12;
+        show_sub_menu_back();
+        break;
+      }
+      case 12:
+      {
+        cur_menu_state = 11;
+        show_sub_menu_1();
+        break;
+      }
+      case 21:
+      {
+        cur_menu_state = 22;
+        show_sub_menu_back();
+        break;
+      }
+      case 22:
+      {
+        cur_menu_state = 21;
+        show_sub_menu_2();
+        break;
+      }
     }
-
-   }
-   else if (cur_sub_level == 1 && cur_state == 2)
-   {
-    /*State Machine for Sub menue Scrolling, menu 2*/
-    switch(cur_substate){
-
-        case 1:
-           {
-            Serial.println("changing to 2");
-            show_sub_menu_back();  
-            cur_substate = 2;
-            break;
-           }
-        case 2:
-        {
-            Serial.println("changing to 1");
-            show_sub_menu_2();
-            cur_substate = 1;
-            break;
-        }
-        default:
-        {
-            show_sub_menu_2();
-            cur_substate = 1;
-            break;
-        }
-    }
-   }
 }
 
 void radio_display_clicked(){
@@ -177,51 +139,44 @@ void radio_display_clicked(){
     //Handle Button Clicked for Menu items --> change menu level
 
    Serial.println("evaluate button clicked... ");
-   if(cur_sub_level == 1)
-   {
-       /*State Machine For SubMenu Clicks*/
-       switch(cur_substate)
-       {
-           case 1:
-            break;
-           case 2: 
-           {
-               if(cur_state == 1)
-               {
-                   show_menu_1();
-                   cur_sub_level = 0;
-               }
-               else if (cur_state ==2)
-               {
-                 show_menu_2();
-                 cur_sub_level = 0;
-               }
-               break;
-           }
-       }
-   }
-   else if (cur_sub_level == 0)
-   {
-       /*State Machine for Main Menu Clicks*/
-       switch(cur_state)
-       {
-           case 1:
-           {
-            cur_substate = 1;
-            cur_sub_level = 1;
-            show_sub_menu_1();
-            break;
-           }
-           case 2:
-           {
-            cur_substate = 2;
-            cur_sub_level = 1;
-            show_sub_menu_2();
-            break;
-           }
-       }
+   
+   
+  switch (cur_menu_state)
+    {
+      case 10:
+      {
+        cur_menu_state = 11;
+        show_sub_menu_1();
+        break;
+      }
+      case 20:
+      {
+        cur_menu_state = 21;
+        show_sub_menu_2();
 
-   }
+        break;
+      }
+      case 11:
+      {
+        break;
+      }
+      case 12:
+      {
+        cur_menu_state = 10;
+        show_menu_1();
+        break;
+      }
+      case 21:
+      {
+        break;
+      }
+      case 22:
+      {
+        cur_menu_state = 20;
+        show_menu_2();
+        break;
+      }
+    }
 }
 
 
@@ -279,7 +234,7 @@ void show_sub_menu_1(){
 }
 
 void show_sub_menu_2(){
-      tft.fillScreen(TFT_RED);
+  tft.fillScreen(TFT_RED);
 
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
   tft.drawCentreString("Submenu2",140,100,4);
