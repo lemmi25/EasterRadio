@@ -16,3 +16,5 @@ void show_sub_menu_1(void);
 void show_sub_menu_2(void);
 
 void show_sub_menu_back(void);
+
+void change_volume_bar(bool up);

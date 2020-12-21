@@ -21,6 +21,13 @@
 #include <radio_display.h>
 #include <radio_encoder.h>
 
+//#define CONFIG_INT_WDT_CHECK_CPU1 1 
+
+int rotary_value; 
+bool wasButton_clicked;
+
+void task_encoder(void *parameter);
+void task_handle(void *parameter);
 
 void setup(void) {
 
@@ -28,27 +35,60 @@ void setup(void) {
 
   radio_display_init();
   rotary_init();
+
+
+   xTaskCreate(
+      task_encoder,  /* Task function. */
+      "TaskEncoder", /* String with name of task. */
+      10000,     /* Stack size in bytes. */
+      NULL,      /* Parameter passed as input of the task */
+      1,         /* Priority of the task. */
+      NULL);     /* Task handle. */
 }
 
 
 void loop() {
 
-  int rotary_value  =  rotary_loop();
 
-
-  if(rotary_value){
-    Serial.println("Display Update");
-    radio_display_update(rotary_value);
+  //Serial.print("loop");
+  if(rotary_value == 0){
+  rotary_value  =  rotary_loop();
   }
-
-  if(get_button_clicked_state() == true)
-  {
-    set_button_clicked_state(false);
-    radio_display_clicked();
-  }
-	
-	delay(200);															 
-	if (millis()>20000) rotary_enable();
+  Serial.print(rotary_value);
   
+  if(wasButton_clicked == false){
+  wasButton_clicked = get_button_clicked_state();
+  }
+
+	vTaskDelay(10);	
+  delay(100);						 
+	if (millis()>2000) rotary_enable();
 }
 
+    TaskHandle_t xHandle = NULL;
+void task_encoder(void *parameter){
+ 
+  for(;;){
+
+    if(wasButton_clicked)
+    {
+      radio_display_clicked();
+      wasButton_clicked = false;
+      set_button_clicked_state(false);
+    }
+    else if(rotary_value){
+      Serial.println("Display Update");
+      radio_display_update(rotary_value);
+      rotary_value = 0;
+    }
+    vTaskDelay(50);
+  }
+}
+
+void task_handle(void *parameter){
+
+  Serial.print("Call task handle");
+  
+    vTaskDelete( xHandle );
+    
+}

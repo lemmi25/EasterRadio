@@ -25,62 +25,23 @@ int cur_sub_level = 0;
 
 int cur_menu_state = 10;
 
+
+//Volume Triangle Bar
+int32_t vol_x1 = 100;
+int32_t vol_x2 = 250;
+int32_t vol_y2 = 100;
+int32_t vol_y1 = 200;
+
+double vol_alpha = 0.0;
+
+
 void radio_display_init(){
 
   tft.init();
   tft.setRotation(1);
-  //tft.fillScreen(TFT_GREEN);
 
-  //show_menu_1();
-  /*
-  //tft.fillScreen(TFT_BLACK);
-  //tft.fillScreen(TFT_RED);
-  
-  //tft.fillScreen(TFT_BLU#define TFT_GREY 0x5AEBE);
-  //tft.fillScreen(TFT_BLACK);
-  tft.fillScreen(TFT_GREY);
-  
-  tft.setTextColor(TFT_WHITE, TFT_GREY);  // Adding a background colour erases previous text automatically
-  
-  // Draw clock face
-  tft.fillCircle(120, 120, 118, TFT_GREEN);
-  tft.fillCircle(120, 120, 110, TFT_BLACK);
-
-  // Draw 12 lines
-  for(int i = 0; i<360; i+= 30) {
-    sx = cos((i-90)*0.0174532925);
-    sy = sin((i-90)*0.0174532925);
-    x0 = sx*114+120;
-    yy0 = sy*114+120;
-    x1 = sx*100+120;
-    yy1 = sy*100+120;
-
-    tft.drawLine(x0, yy0, x1, yy1, TFT_GREEN);
-  }
-
-  // Draw 60 dots
-  for(int i = 0; i<360; i+= 6) {
-    sx = cos((i-90)*0.0174532925);
-    sy = sin((i-90)*0.0174532925);
-    x0 = sx*102+120;
-    yy0 = sy*102+120;
-    // Draw minute markers
-    tft.drawPixel(x0, yy0, TFT_WHITE);
-    
-    // Draw main quadrant dots
-    if(i==0 || i==180) tft.fillCircle(x0, yy0, 2, TFT_WHITE);
-    if(i==90 || i==270) tft.fillCircle(x0, yy0, 2, TFT_WHITE);
-  }
-
-  tft.fillCircle(120, 121, 3, TFT_WHITE);
-
-  // Draw text at position 120,260 using fonts 4
-  // Only font numbers 2,4,6,7 are valid. Font 6 only contains characters [space] 0 1 2 3 4 5 6 7 8 9 : . - a p m
-  // Font 7 is a 7 segment font and only contains characters [space] 0 1 2 3 4 5 6 7 8 9 : .
-  tft.drawCentreString("Time flies",120,260,4);
-
-  targetTime = millis() + 1000; 
-*/
+  cur_menu_state = 10;
+  show_menu_1();
 }
 
 
@@ -90,10 +51,7 @@ void radio_display_update(int rotary_number)
     //Handle Rotation with Encoder for Menu Item Switching
     /*State Machine*/
 
-    Serial.print("cur menu state = ");
-    Serial.print(cur_menu_state);
-    Serial.print(", rot = ");
-    Serial.println(rotary_number);
+
 
     bool cw = rotary_number > 0 ? 1:0;
 
@@ -155,8 +113,17 @@ void radio_display_update(int rotary_number)
       }
       case 21:
       {
-        cur_menu_state = 22;
-        show_sub_menu_back();
+        //cur_menu_state = 22;
+        
+        if(cw)
+        {
+         change_volume_bar(true);
+        }
+        else
+        {
+          change_volume_bar(false);
+        }
+        //show_sub_menu_back();
         break;
       }
       case 22:
@@ -166,14 +133,20 @@ void radio_display_update(int rotary_number)
         break;
       }
     }
+
+    Serial.print("cur menu state = ");
+    Serial.print(cur_menu_state);
+    Serial.print(", rot = ");
+    Serial.println(rotary_number);
 }
 
 void radio_display_clicked(){
 
     //Handle Button Clicked for Menu items --> change menu level
 
-   Serial.println("evaluate button clicked... ");
-   
+  Serial.println("evaluate button clicked... ");
+  Serial.print("cur menu state = ");
+  Serial.print(cur_menu_state);
    
   switch (cur_menu_state)
     {
@@ -187,7 +160,6 @@ void radio_display_clicked(){
       {
         cur_menu_state = 21;
         show_sub_menu_2();
-
         break;
       }
       case 30:
@@ -214,6 +186,7 @@ void radio_display_clicked(){
         show_menu_2();
         break;
       }
+      default: break;
     }
 }
 
@@ -252,10 +225,9 @@ void show_menu_2(){
   tft.setCursor(0, 0, 2);
 
   // Test some print formatting functions
-  float fnumber = 123.45;
    // Set the font colour to be blue with no background, set to font 4
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("MORITZ - 2",130,100,4);
+  tft.drawCentreString("VOLUME - 2",140,100,4);
   //tft.print("R = "); tft.println(fnumber);           // Print floating point number
   //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
   //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
@@ -275,11 +247,9 @@ void show_menu_3(){
   //  or stay on the line is there is room for the text with tft.print)
   tft.setCursor(0, 0, 2);
 
-  // Test some print formatting functions
-  float fnumber = 123.45;
    // Set the font colour to be blue with no background, set to font 4
-  tft.setTextColor(TFT_DARKGREEN);    tft.setTextFont(4);
-  tft.drawCentreString("SETTINGS - 3",130,100,4);
+  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
+  tft.drawCentreString("SETTINGS - 3",150,100,4);
   //tft.print("R = "); tft.println(fnumber);           // Print floating point number
   //tft.print("Binary = "); tft.println((int)fnumber, BIN); // Print as integer value in binary
   //tft.print("Hexadecimal = "); tft.println((int)fnumber, HEX); // Print as integer number in Hexadecimal
@@ -302,13 +272,39 @@ void show_sub_menu_1(){
 void show_sub_menu_2(){
   tft.fillScreen(TFT_RED);
 
+
+  vol_alpha = atan(double((vol_y2-vol_y1))/double(vol_x2-vol_x1));
+
+  tft.drawTriangle(vol_x1, vol_y1, vol_x2, vol_y1, vol_x2, vol_y2, TFT_BLUE);
+
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("Submenu2",140,100,4);
+  tft.drawCentreString("Volume",140,10,1);
+
+}
+
+
+
+void change_volume_bar(bool up)
+{
+  static double cur_volume_x = 75.0;
+  int32_t i = 5;
+
+  Serial.println(up);
+  if(!up)
+  {
+    i = i*(-1);
+    tft.fillTriangle(vol_x1, vol_y1, vol_x1+cur_volume_x, vol_y1, vol_x1+cur_volume_x, vol_y1+tan(vol_alpha)*(cur_volume_x), TFT_RED);
+    tft.drawTriangle(vol_x1, vol_y1, vol_x2, vol_y1, vol_x2, vol_y2, TFT_BLUE);
+  }
+
+  cur_volume_x +=i; 
+  tft.fillTriangle(vol_x1, vol_y1, vol_x1+cur_volume_x, vol_y1, vol_x1+cur_volume_x, vol_y1+tan(vol_alpha)*(cur_volume_x), TFT_BLUE);
 
 }
 
 void show_sub_menu_back(){
       tft.fillScreen(TFT_RED);
+
 
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
   tft.drawCentreString("Return",140,100,4);

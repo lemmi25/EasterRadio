@@ -11,15 +11,15 @@ void rotary_init(){
 	rotaryEncoder.begin();
 	rotaryEncoder.setup([]{rotaryEncoder.readEncoder_ISR();});
 	//optionally we can set boundaries and if values should cycle or not
-	rotaryEncoder.setBoundaries(0, 10, true); //minValue, maxValue, cycle values (when max go to min and vice versa)
-
+	rotaryEncoder.setBoundaries(-100, 100, true); //minValue, maxValue, cycle values (when max go to min and vice versa)
+    //rotaryEncoder.reset(); 
 
 }
 
 
-int test_limits = 2;
+//int test_limits = 2;
 void rotary_onButtonClick() {
-	//rotaryEncoder.reset();
+	rotaryEncoder.reset();
 	//rotaryEncoder.disable();
     Serial.println("buttonClicked");
 
@@ -40,6 +40,11 @@ int rotary_loop() {
 	//lets see if anything changed
 	int16_t encoderDelta = rotaryEncoder.encoderChanged();
 	
+	if(encoderDelta)
+	{
+	Serial.println("Changed?");
+	Serial.println(encoderDelta);
+}
 	//optionally we can ignore whenever there is no change
 	if (encoderDelta == 0) return 0;
 	
@@ -58,7 +63,9 @@ int rotary_loop() {
 		encoderValue = rotaryEncoder.readEncoder();
 		//process new value. Here is simple output.
 		Serial.print("Value: ");
-		Serial.println(encoderValue);
+		Serial.print(encoderValue);
+		Serial.print("Delta: ");
+		Serial.print(encoderDelta);
 	} 
 
     //return encoderValue;
@@ -71,12 +78,12 @@ int rotary_loop() {
         rotaryEncoder.enable ();
     }
 
-    bool get_button_clicked_state(){
-
+    bool get_button_clicked_state()
+	{
         return button_clicked;
     }
 
-    void set_button_clicked_state(bool new_state){
-
+    void set_button_clicked_state(bool new_state)
+	{
         button_clicked = new_state;
     }
