@@ -24,8 +24,6 @@ void rotary_onButtonClick() {
     Serial.println("buttonClicked");
 
     button_clicked = true;
-	//rotaryEncoder.setBoundaries(-test_limits, test_limits, false);
-	//test_limits *= 2;
 }
 
 int rotary_loop() {
@@ -34,17 +32,11 @@ int rotary_loop() {
 		//we can process it here or call separate function like:
         Serial.println("released");
 		rotary_onButtonClick();
-        
 	}
 
 	//lets see if anything changed
 	int16_t encoderDelta = rotaryEncoder.encoderChanged();
 	
-	if(encoderDelta)
-	{
-	Serial.println("Changed?");
-	Serial.println(encoderDelta);
-}
 	//optionally we can ignore whenever there is no change
 	if (encoderDelta == 0) return 0;
 	
@@ -68,7 +60,6 @@ int rotary_loop() {
 		Serial.print(encoderDelta);
 	} 
 
-    //return encoderValue;
     return encoderDelta;
 	
 }

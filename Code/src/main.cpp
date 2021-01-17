@@ -20,52 +20,63 @@
 
 #include <radio_display.h>
 #include <radio_encoder.h>
+//#include <hm_radio.h>
 
 //#define CONFIG_INT_WDT_CHECK_CPU1 1 
 
 int rotary_value; 
-bool wasButton_clicked;
+bool wasButton_clicked = false;
+bool wasRotated = false;
+
+unsigned long timeLastActive;
+bool saverOff = true;
 
 void task_encoder(void *parameter);
-void task_handle(void *parameter);
 
 void setup(void) {
 
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   radio_display_init();
   rotary_init();
+  timeLastActive = millis();
 
-
-   xTaskCreate(
+  xTaskCreate(
       task_encoder,  /* Task function. */
       "TaskEncoder", /* String with name of task. */
       10000,     /* Stack size in bytes. */
       NULL,      /* Parameter passed as input of the task */
       1,         /* Priority of the task. */
       NULL);     /* Task handle. */
+
 }
 
 
 void loop() {
 
-
-  //Serial.print("loop");
-  if(rotary_value == 0){
-  rotary_value  =  rotary_loop();
+  if(wasRotated == false){
+    rotary_value  =  rotary_loop();
+    wasRotated = true;
   }
-  Serial.print(rotary_value);
   
   if(wasButton_clicked == false){
-  wasButton_clicked = get_button_clicked_state();
+    wasButton_clicked = get_button_clicked_state();
   }
 
-	vTaskDelay(10);	
+  if (timeLastActive > 10000 && timeLastActive < (millis()-10000) && saverOff )
+  {
+    Serial.println("Saver");
+    show_display_saver();
+    saverOff = false;
+  }
+
   delay(100);						 
 	if (millis()>2000) rotary_enable();
 }
 
     TaskHandle_t xHandle = NULL;
+
+//encoder Task
 void task_encoder(void *parameter){
  
   for(;;){
@@ -74,21 +85,23 @@ void task_encoder(void *parameter){
     {
       radio_display_clicked();
       wasButton_clicked = false;
-      set_button_clicked_state(false);
-    }
-    else if(rotary_value){
-      Serial.println("Display Update");
-      radio_display_update(rotary_value);
       rotary_value = 0;
+      set_button_clicked_state(false);
+      timeLastActive = millis();
+      saverOff = true;
+      delay(200);
     }
-    vTaskDelay(50);
+    else if(wasRotated){
+      if(rotary_value){
+        Serial.println("Display Update");
+        radio_display_update(rotary_value);
+        timeLastActive = millis();
+        saverOff = true;
+        delay(500);
+        rotary_value = 0;
+      }
+      wasRotated = false;
+    }
+    vTaskDelay(300);
   }
-}
-
-void task_handle(void *parameter){
-
-  Serial.print("Call task handle");
-  
-    vTaskDelete( xHandle );
-    
 }
