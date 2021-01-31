@@ -1,0 +1,30 @@
+{
+	"folders": [
+		{
+			"path": "./"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"cstdio": "cpp",
+			"cstdarg": "cpp"
+		},
+		"search.exclude": {
+			"**/.*": true,
+			"build": true
+		},
+		"search.useIgnoreFiles": false
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: Current File",
+				"type": "python",
+				"request": "launch",
+				"program": "${file}",
+				"console": "integratedTerminal"
+			}
+		]
+	}
+}
