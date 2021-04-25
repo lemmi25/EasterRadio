@@ -6,6 +6,7 @@ AiEsp32RotaryEncoder rotaryEncoder = AiEsp32RotaryEncoder(ROTARY_ENCODER_A_PIN, 
 
 
 bool button_clicked = false;
+encoderData encoder1;
 
 void rotary_init(){
 
@@ -126,3 +127,7 @@ int rotary_loop() {
 	{
         button_clicked = new_state;
     }
+
+	encoderData* get_encoder_data(){
+    return &encoder1;
+}

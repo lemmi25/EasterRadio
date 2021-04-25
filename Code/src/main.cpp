@@ -26,6 +26,7 @@
 #include "MCP3X21.h"  // https://github.com/pilotak/MCP3X21
 
 
+
 //#include <hm_radio.h>
 
 //#define CONFIG_INT_WDT_CHECK_CPU1 1 
@@ -54,7 +55,12 @@ bool wasButton_clicked = false;
 unsigned long timeLastActive;
 bool saverOff = true;
 
+void task_lvgl(void *parameter);
 void task_enc2disp(void *parameter);
+
+//TFT_eSPI tft = TFT_eSPI(); /* TFT instance */
+
+
 /*
 void my_lv_drivers_init(void);
 
@@ -97,6 +103,13 @@ void setup(void) {
   //radio_display_init();
   Serial.begin(115200);
   rotary_init();
+
+  //tft.begin(); /* TFT init */
+  //tft.setRotation(1); /* Landscape orientation */
+    
+  radio_display_init();
+  
+
   timeLastActive = millis();
 
   Serial.println("Creating task...");
@@ -111,6 +124,16 @@ void setup(void) {
       1,         /* Priority of the task. */
       NULL);     /* Task handle. */
 
+  xTaskCreate(
+      task_lvgl,  /* Task function. */
+      "TaskLVGL", /* String with name of task. */
+      10000,         /* Stack size in bytes. */
+      NULL,          /* Parameter passed as input of the task */
+      5,             /* Priority of the task. */
+      NULL);         /* Task handle. */
+
+
+  //pinMode(19, INPUT);
 }
 
 
@@ -118,7 +141,7 @@ void loop() {
 
 
   //lv_tick_inc(10);
-
+/*
    if (si4844.hasStatusChanged())
   {
     Serial.print("[Band..: ");
@@ -131,9 +154,9 @@ void loop() {
       Serial.print(si4844.getStereoIndicator());
     }
     Serial.println("]");
-  }
+  }*/
     // writeBit works just like digitalWrite
-  
+  /*
   shift.writeBit(2, LOW);
   
   shift.writeBit(5, LOW);
@@ -145,6 +168,20 @@ void loop() {
   shift.writeBit(5, LOW);
   delay(14);
 
+  delay(10);
+  lv_tick_inc(10);
+*/
+    //lv_task_handler();
+  delay(10);
+  lv_tick_inc(10);
+}
+
+
+void task_lvgl(void *parameter){
+  for(;;){
+  lv_task_handler();
+  vTaskDelay(100);
+  }
 }
 
 
@@ -160,7 +197,7 @@ void task_enc2disp(void *parameter){
 
     if(wasButton_clicked)
     {
-      radio_display_clicked();
+      //radio_display_clicked();
       wasButton_clicked = false;
       //rotary_value = 0;
       set_button_clicked_state(false);
@@ -171,7 +208,7 @@ void task_enc2disp(void *parameter){
     //else if(wasRotated){
     else if(rotary_value){
         Serial.println("Display Update");
-        radio_display_update(rotary_value);
+        //radio_display_update(rotary_value);
         timeLastActive = millis();
         saverOff = true;
         //delay(500);
@@ -181,3 +218,7 @@ void task_enc2disp(void *parameter){
     vTaskDelay(300);
   }
 }
+
+
+
+
