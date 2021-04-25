@@ -316,7 +316,7 @@ void change_volume_bar(bool up)
 }
 
 void show_sub_menu_back(){
-  
+
   tft.fillScreen(TFT_WHITE);
 
   tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
