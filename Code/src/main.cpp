@@ -40,7 +40,7 @@
 
 
 const uint8_t address = 0x4E;
-const uint16_t ref_voltage = 4200;  // in mV
+const uint16_t ref_voltage = 3300;  // in mV
 
 MCP3221 mcp3221(address);
 SI4844 si4844; 
@@ -57,6 +57,20 @@ bool saverOff = true;
 
 void task_lvgl(void *parameter);
 void task_enc2disp(void *parameter);
+
+
+enum color{
+  RED = 0, 
+  GREEN, 
+  BLUE
+};
+
+void set_LED(int led_num, color led_col, bool highlow);
+
+
+
+
+
 
 //TFT_eSPI tft = TFT_eSPI(); /* TFT instance */
 
@@ -82,7 +96,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 void setup(void) {
 
   // Set the number of bits you have (multiples of 8)
-  shift.setBitCount(8);
+  shift.setBitCount(24);
 
   // Set the clock, data, and latch pins you are using
   // This also sets the pinMode for these pins
@@ -92,23 +106,30 @@ void setup(void) {
   Wire.begin(SDA, SCL);
 
   
-  delay(500);  
+  //delay(500);  
 
-  mcp3221.init();
+    //mcp3221.init();
+
+   // Wire.begin(SDA, SCL);
+   // mcp3221.init(&Wire);
 
   //comment if no radio chip connected
   //si4844.setup(RESET_PIN, INTERRUPT_PIN, DEFAULT_BAND);
 
   //Comment if no display connected
   //radio_display_init();
-  Serial.begin(115200);
+  Serial.begin(9600);
+
+  radio_display_init();
+
+
   rotary_init();
 
   //tft.begin(); /* TFT init */
   //tft.setRotation(1); /* Landscape orientation */
     
-  radio_display_init();
   
+
 
   timeLastActive = millis();
 
@@ -123,17 +144,24 @@ void setup(void) {
       NULL,      /* Parameter passed as input of the task */
       1,         /* Priority of the task. */
       NULL);     /* Task handle. */
-
-  xTaskCreate(
-      task_lvgl,  /* Task function. */
-      "TaskLVGL", /* String with name of task. */
-      10000,         /* Stack size in bytes. */
-      NULL,          /* Parameter passed as input of the task */
-      5,             /* Priority of the task. */
-      NULL);         /* Task handle. */
-
+// /*
+//   xTaskCreate(
+//       task_lvgl,  /* Task function. */
+//       "TaskLVGL", /* String with name of task. */
+//       10000,         /* Stack size in bytes. */
+//       NULL,          /* Parameter passed as input of the task */
+//       5,             /* Priority of the task. */
+//       NULL);         /* Task handle. */
+// */
 
   //pinMode(19, INPUT);
+    set_LED(1, RED, false);
+    set_LED(2, RED, false);
+    set_LED(3, RED, false);
+    set_LED(4, GREEN, false);
+    set_LED(5, GREEN, false);
+
+    lv_radio_encoder();
 }
 
 
@@ -157,23 +185,21 @@ void loop() {
   }*/
     // writeBit works just like digitalWrite
   /*
-  shift.writeBit(2, LOW);
-  
-  shift.writeBit(5, LOW);
-  shift.writeBit(6, LOW);
-  
-  shift.writeBit(9, LOW);
-  delay(1);
-  shift.writeBit(2, LOW);
-  shift.writeBit(5, LOW);
-  delay(14);
+    uint16_t result = mcp3221.read();
 
-  delay(10);
-  lv_tick_inc(10);
-*/
-    //lv_task_handler();
-  delay(10);
-  lv_tick_inc(10);
+    Serial.print(F("ADC: "));
+    Serial.print(result);
+    Serial.print(F(", mV: "));
+    Serial.println(mcp3221.toVoltage(result, ref_voltage));
+    */
+
+  delay(1000);
+  
+
+
+  lv_task_handler();
+  //delay(10);
+  lv_tick_inc(1000);
 }
 
 
@@ -190,7 +216,9 @@ TaskHandle_t xHandle = NULL;
 //encoder Task
 void task_enc2disp(void *parameter){
  
+
   for(;;){
+
 
     wasButton_clicked = get_button_clicked_state();
     rotary_value  =  rotary_loop();
@@ -222,3 +250,39 @@ void task_enc2disp(void *parameter){
 
 
 
+void set_LED(int led_num, color led_col, bool highlow)
+{
+
+  //LED 1: 0,1,2
+  //LED 2: 11,12,13
+  //LED 3: 8,9,10
+  //LED 4: 17,18,19
+  //LED 5: 14, 15, 16
+
+  int color_bit; 
+  int r_bit = 0;
+
+  //set initial val for LED to set: 
+  switch(led_num){
+    case 1:
+      r_bit = 0;
+      break;
+    case 2:
+      r_bit = 11;
+      break;
+    case 3:
+      r_bit = 8;
+      break;
+    case 4: 
+      r_bit = 19;
+      break;
+    case 5:
+      r_bit = 16;
+      break;
+  }
+
+  color_bit = r_bit + led_col;
+  shift.writeBit(color_bit, highlow);
+
+
+}

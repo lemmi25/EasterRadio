@@ -3,6 +3,8 @@
 
 
 
+
+void lv_radio_encoder(void);
 void radio_display_init(void);
 void radio_display_update(int rotary_number);
 void radio_display_clicked(void);

@@ -16,6 +16,7 @@ static lv_color_t buf[LV_HOR_RES_MAX * 10];
 
 static lv_group_t*  g;
 static lv_obj_t * tv;
+static lv_obj_t * t1;
 
 static void focus_cb(lv_group_t * g);
 
@@ -97,19 +98,15 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 
 void radio_display_init(){
+/* 
+  tft.init();
+  tft.setRotation(3);
 
-  //tft.init();
-  //tft.setRotation(3);
-/*
   tft.setSwapBytes(true);
 
   tft.fillScreen(TFT_BLUE);
-  tft.pushImage(60, 15, mhWidth, mhHeight, mh);
+  tft.pushImage(60, 15, mhWidth, mhHeight, mh); */
 
-  delay(3000);
-
-  cur_menu_state = 10;
-  show_menu_1();*/
 
   
   lv_init();
@@ -150,8 +147,16 @@ void lv_radio_encoder(void)
   lv_indev_t * enc_indev = lv_indev_drv_register(&enc_drv);
   lv_indev_set_group(enc_indev, g);
 
-    tv = lv_tabview_create(lv_scr_act(), NULL);
+  tv = lv_tabview_create(lv_scr_act(), NULL);
 
+  t1 = lv_tabview_add_tab(tv, "Selectors");
+
+  lv_obj_t * labe;
+  labe = lv_label_create(t1, NULL);
+  lv_label_set_text(labe, "Short text");
+
+  lv_group_add_obj(g, tv);
+  lv_group_add_obj(g, t1);
 
 }
 
@@ -423,13 +428,22 @@ static uint8_t conv2d(const char* p) {
   return 10 * v + *++p - '0';
 }
 
-
-
 /* Reading input device (simulated encoder here) */
 bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
 {
+
+
+  data->enc_diff = rotary_loop();
+
+  if(get_button_clicked_state()) data->state = LV_INDEV_STATE_PR;
+  else data->state = LV_INDEV_STATE_REL;
+
+  return false; /*No buffering now so no more data read*/
+
+
+  /*
     encoderData* encoderData = get_encoder_data();
-    Serial.print("Read Encoder daata");
+    //Serial.print("Read Encoder daata");
     if(encoderData->pushed)
     {
       Serial.println("Clicked, lvgl");
@@ -455,7 +469,7 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
       data->key = LV_KEY_NEXT;
     }
 
-    return false;
+    return false;*/
 }
 
 
