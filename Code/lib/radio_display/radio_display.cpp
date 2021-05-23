@@ -98,14 +98,14 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 
 void radio_display_init(){
-/* 
+
   tft.init();
   tft.setRotation(3);
 
   tft.setSwapBytes(true);
 
   tft.fillScreen(TFT_BLUE);
-  tft.pushImage(60, 15, mhWidth, mhHeight, mh); */
+  tft.pushImage(60, 15, mhWidth, mhHeight, mh); 
 
 
   

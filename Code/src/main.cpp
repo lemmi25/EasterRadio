@@ -192,14 +192,12 @@ void loop() {
     Serial.print(F(", mV: "));
     Serial.println(mcp3221.toVoltage(result, ref_voltage));
     */
-
-  delay(1000);
   
 
 
   lv_task_handler();
-  //delay(10);
-  lv_tick_inc(1000);
+  delay(100);
+  lv_tick_inc(100);
 }
 
 
