@@ -18,6 +18,8 @@ static lv_group_t*  g;
 static lv_obj_t * tv;
 static lv_obj_t * t1;
 
+static lv_obj_t * win;
+
 static void focus_cb(lv_group_t * g);
 
 bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data);
@@ -147,6 +149,26 @@ void lv_radio_encoder(void)
   lv_indev_t * enc_indev = lv_indev_drv_register(&enc_drv);
   lv_indev_set_group(enc_indev, g);
 
+
+    /*Create a window*/
+    win = lv_page_create(lv_scr_act(), NULL);
+    //lv_win_set_title(win, "Window title");                        /*Set the title*/
+    lv_obj_set_pos(win, LV_DPX(10), LV_DPX(10));
+    /*Add control button to the header*/
+    //lv_obj_t * close_btn = lv_win_add_btn(win, LV_SYMBOL_CLOSE);           /*Add close button and use built-in close action*/
+    //lv_obj_set_event_cb(close_btn, lv_win_close_event_cb);
+    lv_win_add_btn(win, LV_SYMBOL_SETTINGS);        /*Add a setup button*/
+
+    lv_win_set_scrollbar_mode(win, LV_SCRLBAR_MODE_ON);
+
+
+    //t1 = lv_tabview_add_tab(tv, "Selectors");
+
+    //lv_group_add_obj(g);
+
+
+    tabview_create(win);
+
   tv = lv_tabview_create(lv_scr_act(), NULL);
 
   t1 = lv_tabview_add_tab(tv, "Selectors");
@@ -157,265 +179,6 @@ void lv_radio_encoder(void)
 
   lv_group_add_obj(g, tv);
   lv_group_add_obj(g, t1);
-
-}
-
-void radio_display_update(int rotary_number)
-{
-    //Handle Rotation with Encoder for Menu Item Switching
-    /*State Machine*/
-    bool cw = rotary_number < 0 ? 1:0;
-
-    //depending on rotary number, go as many menus further.  
-    for (int i = 1; i<abs(rotary_number); i=i+2)
-    {
-      switch (cur_menu_state)
-      {
-        case 10:
-        {
-          if(cw)
-          {
-            cur_menu_state = 20;
-            show_menu_2();
-          }
-          else
-          {
-            cur_menu_state = 30;
-            show_menu_3(); 
-          }
-          break;
-        }
-        case 20:
-        {
-          if(cw)
-          {
-            cur_menu_state = 30;
-            show_menu_3();
-          }
-          else
-          {
-            cur_menu_state = 10;
-            show_menu_1();
-          }
-          break;
-        }
-        case 30:
-        {
-          if(cw)
-          {
-            cur_menu_state = 10;
-            show_menu_1();
-          }
-          else
-          {
-            cur_menu_state = 20;
-            show_menu_2();
-          }
-          break;
-        }
-        case 11:
-        {
-          cur_menu_state = 12;
-          show_sub_menu_back();
-          break;
-        }
-        case 12:
-        {
-          cur_menu_state = 11;
-          show_sub_menu_1();
-          break;
-        }
-        case 21:
-        {
-          change_volume_bar(cw);
-          break;
-        }
-        case 22:
-        {
-          cur_menu_state = 21;
-          show_sub_menu_2();
-          break;
-        }
-      }
-    }
-  /*
-    Serial.print("cur menu state = ");
-    Serial.print(cur_menu_state);
-    Serial.print(", rot = ");
-    Serial.println(rotary_number);*/
-}
-
-void radio_display_clicked(){
-
-    //Handle Button Clicked for Menu items --> change menu level
-
-  Serial.println("evaluate button clicked... ");
-  Serial.print("cur menu state = ");
-  Serial.print(cur_menu_state);
-   
-  switch (cur_menu_state)
-    {
-      case 10:
-      {
-        cur_menu_state = 11;
-        show_sub_menu_1();
-        break;
-      }
-      case 20:
-      {
-        cur_menu_state = 21;
-        show_sub_menu_2();
-        break;
-      }
-      case 30:
-      {
-        break;
-      }
-      case 11:
-      {
-        break;
-      }
-      case 12:
-      {
-        cur_menu_state = 10;
-        show_menu_1();
-        break;
-      }
-      case 21:
-      {
-        cur_menu_state = 20;
-        our_radio.set_cur_volume((uint8_t) volume_bar_width/2);
-        show_menu_2();
-        break;
-      }
-      case 22:
-      {
-        cur_menu_state = 20;
-        show_menu_2();
-        break;
-      }
-      default: break;
-    }
-}
-
-void show_display_saver(void){
-
-  tft.fillScreen(TFT_BLACK);
-  //tft.pushImage(50, 15, mhWidth, mhHeight, mh);
-  tft.drawFloat(89.0, 1, 110, 110);
-
-  tft.drawNumber(our_radio.get_cur_volume(),20, 20, 1);
-  tft.drawString("%",60, 20, 1);
-}
-
-void show_menu_1(){
-
-  // Fill screen with grey so we can see the effect of printing with and without 
-  // a background colour defined
-  tft.fillScreen(TFT_WHITE);
-  
-  // Set "cursor" at top left corner of display (0,0) and select font 2
-  // (cursor will move to next line automatically during printing with 'tft.println'
-  //  or stay on the line is there is room for the text with tft.print)
-  tft.setCursor(0, 0, 2);
-
-  // Test some print formatting functions
-   // Set the font colour to be blue with no background, set to font 4
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("1. WELCOME",140,100,4);
-
-}
-
-void show_menu_2(){
-
-  // Fill screen with grey so we can see the effect of printing with and without 
-  // a background colour defined
-  tft.fillScreen(TFT_WHITE);
-  
-  // Set "cursor" at top left corner of display (0,0) and select font 2
-  // (cursor will move to next line automatically during printing with 'tft.println'
-  //  or stay on the line is there is room for the text with tft.print)
-  tft.setCursor(0, 0, 2);
-
-  // Test some print formatting functions
-   // Set the font colour to be blue with no background, set to font 4
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(3);
-  tft.drawCentreString("2. VOLUME",140,100,4);
-
-}
-
-
-void show_menu_3(){
-
-  // Fill screen with grey so we can see the effect of printing with and without 
-  // a background colour defined
-  tft.fillScreen(TFT_WHITE);
-  
-  // Set "cursor" at top left corner of display (0,0) and select font 2
-  // (cursor will move to next line automatically during printing with 'tft.println'
-  //  or stay on the line is there is room for the text with tft.print)
-  tft.setCursor(0, 0, 2);
-
-   // Set the font colour to be blue with no background, set to font 4
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(3);
-  tft.drawCentreString("3. SETTINGS",150,100,4);
-  tft.pushImage(150, 150, settWidth, settHeight, settings);
-
-}
-
-
-void show_sub_menu_1(){
-  tft.fillScreen(TFT_WHITE);
-
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("Submenu1",140,100,4);
-
-}
-
-void show_sub_menu_2(){
-  tft.fillScreen(TFT_WHITE);
-
-  uint8_t cur_volume = our_radio.get_cur_volume();
-
-  Serial.println("Cur Volume:");
-  Serial.println(cur_volume);
-  volume_bar_width = cur_volume*2;//this is the width of the filled area of the volume triangle. Volume is between 0...100 and the filled area can be between 0...200.
-
-  vol_alpha = atan(double((vol_y2-vol_y1))/double(vol_x2-vol_x1));
-
-  tft.drawTriangle(vol_x1, vol_y1, vol_x2, vol_y1, vol_x2, vol_y2, TFT_BLUE);
-  tft.fillTriangle(vol_x1, vol_y1, vol_x1+volume_bar_width, vol_y1, vol_x1+volume_bar_width, vol_y1+tan(vol_alpha)*(volume_bar_width), TFT_BLUE);
-
-
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("Volume",140,10,1);
-}
-
-void change_volume_bar(bool up)
-{
-  int32_t i = 20;
-
-  Serial.println("Cur Volume Bar Width:");
-  Serial.println(volume_bar_width);
-  Serial.println(up);
-  if(!up)
-  {
-    i = i*(-1);
-    tft.fillTriangle(vol_x1, vol_y1, vol_x1+volume_bar_width, vol_y1, vol_x1+volume_bar_width, vol_y1+tan(vol_alpha)*(volume_bar_width), TFT_WHITE);
-    tft.drawTriangle(vol_x1, vol_y1, vol_x2, vol_y1, vol_x2, vol_y2, TFT_BLUE);
-  }
-  if(!(volume_bar_width == 0  && i <0) && !(volume_bar_width==200 && i>0)){ //ensure no limit has been reached.
-      volume_bar_width +=i; 
-      tft.fillTriangle(vol_x1, vol_y1, vol_x1+volume_bar_width, vol_y1, vol_x1+volume_bar_width, vol_y1+tan(vol_alpha)*(volume_bar_width), TFT_BLUE);
-  }
-}
-
-void show_sub_menu_back(){
-
-  tft.fillScreen(TFT_WHITE);
-
-  tft.setTextColor(TFT_BLUE);    tft.setTextFont(4);
-  tft.drawCentreString("Return",140,100,4);
 
 }
 
