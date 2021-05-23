@@ -327,8 +327,11 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
 {
 
 
-    static int old_enc_val = 0;
-    int encoderd = rotary_loop();
+    static int16_t old_enc_val = 0;
+    int16_t encoderd = rotary_loop();
+
+    Serial.print("old val:");
+    Serial.println(old_enc_val);
 
     //Serial.print("Read Encoder daata");
     if(get_button_clicked_state())
@@ -345,6 +348,13 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
     
     if(encoderd)
     {
+      if(encoderd > 900 && old_enc_val < 10)
+      {
+        old_enc_val = old_enc_val + 1000;
+      }
+      else if(encoderd < 10 && old_enc_val > 900){
+        old_enc_val = old_enc_val - 1000;
+      }
       // int encoder_val  = encoderData->roationDelta;
       data->enc_diff = encoderd-old_enc_val;
       Serial.print("Rotated, lvgl:");

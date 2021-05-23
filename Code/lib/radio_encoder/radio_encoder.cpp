@@ -62,7 +62,7 @@ void rotary_onButtonClick() {
     button_clicked = true;*/
 }
 
-int rotary_loop() {
+int16_t rotary_loop() {
 
 
 	//dont print anything unless value changed

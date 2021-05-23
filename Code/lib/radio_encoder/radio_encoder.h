@@ -20,7 +20,7 @@ GND - to microcontroler GND
 
 
 void rotary_init(void);
-int rotary_loop(void);
+int16_t rotary_loop(void);
 void rotary_onButtonClick(void);
 void rotary_enable(void);
 
