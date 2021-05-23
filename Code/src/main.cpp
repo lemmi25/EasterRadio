@@ -135,25 +135,6 @@ void setup(void) {
 
   Serial.println("Creating task...");
 
-  
-  //Check Encoder Changes and transfer to display etc
-  xTaskCreate(
-      task_enc2disp,  /* Task function. */
-      "TaskEncoder", /* String with name of task. */
-      10000,     /* Stack size in bytes. */
-      NULL,      /* Parameter passed as input of the task */
-      1,         /* Priority of the task. */
-      NULL);     /* Task handle. */
-// /*
-//   xTaskCreate(
-//       task_lvgl,  /* Task function. */
-//       "TaskLVGL", /* String with name of task. */
-//       10000,         /* Stack size in bytes. */
-//       NULL,          /* Parameter passed as input of the task */
-//       5,             /* Priority of the task. */
-//       NULL);         /* Task handle. */
-// */
-
   //pinMode(19, INPUT);
     set_LED(1, RED, false);
     set_LED(2, RED, false);
@@ -167,22 +148,21 @@ void setup(void) {
 
 void loop() {
 
-
   //lv_tick_inc(10);
-/*
-   if (si4844.hasStatusChanged())
-  {
-    Serial.print("[Band..: ");
-    Serial.print(si4844.getBandMode());
-    Serial.print(" - Frequency: ");    
-    Serial.print(si4844.getFrequency(),0);
-    Serial.print(" KHz");
-    if (si4844.getStatusBandMode() == 0) {
-      Serial.print(" - Stereo ");
-      Serial.print(si4844.getStereoIndicator());
-    }
-    Serial.println("]");
-  }*/
+
+  //  if (si4844.hasStatusChanged())
+  // {
+  //   Serial.print("[Band..: ");
+  //   Serial.print(si4844.getBandMode());
+  //   Serial.print(" - Frequency: ");    
+  //   Serial.print(si4844.getFrequency(),0);
+  //   Serial.print(" KHz");
+  //   if (si4844.getStatusBandMode() == 0) {
+  //     Serial.print(" - Stereo ");
+  //     Serial.print(si4844.getStereoIndicator());
+  //   }
+  //   Serial.println("]");
+  // }
     // writeBit works just like digitalWrite
   /*
     uint16_t result = mcp3221.read();
@@ -192,60 +172,11 @@ void loop() {
     Serial.print(F(", mV: "));
     Serial.println(mcp3221.toVoltage(result, ref_voltage));
     */
-  
-
 
   lv_task_handler();
-  delay(100);
-  lv_tick_inc(100);
+  delay(10);
+  lv_tick_inc(10);
 }
-
-
-void task_lvgl(void *parameter){
-  for(;;){
-  lv_task_handler();
-  vTaskDelay(100);
-  }
-}
-
-
-TaskHandle_t xHandle = NULL;
-
-//encoder Task
-void task_enc2disp(void *parameter){
- 
-
-  for(;;){
-
-
-    wasButton_clicked = get_button_clicked_state();
-    rotary_value  =  rotary_loop();
-
-    if(wasButton_clicked)
-    {
-      //radio_display_clicked();
-      wasButton_clicked = false;
-      //rotary_value = 0;
-      set_button_clicked_state(false);
-      timeLastActive = millis();
-      saverOff = true;
-      //delay(200);
-    }
-    //else if(wasRotated){
-    else if(rotary_value){
-        Serial.println("Display Update");
-        //radio_display_update(rotary_value);
-        timeLastActive = millis();
-        saverOff = true;
-        //delay(500);
-        rotary_value = 0;
-      }
-
-    vTaskDelay(300);
-  }
-}
-
-
 
 
 void set_LED(int led_num, color led_col, bool highlow)

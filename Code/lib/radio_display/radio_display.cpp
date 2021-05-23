@@ -15,14 +15,28 @@ static lv_disp_buf_t disp_buf;
 static lv_color_t buf[LV_HOR_RES_MAX * 10];
 
 static lv_group_t*  g;
-static lv_obj_t * tv;
-static lv_obj_t * t1;
 
+lv_obj_t *tileview;
 static lv_obj_t * win;
 
+
+struct {
+    lv_obj_t * tile_vol;
+    lv_obj_t * tile_sett;
+    lv_obj_t * tile_wifi;
+}tile_objs;
+
+LV_IMG_DECLARE(wifi_sign);
+LV_IMG_DECLARE(volume_sign);
+
 static void focus_cb(lv_group_t * g);
+static void tv_event_cb(lv_obj_t * tv, lv_event_t e);
+
+static void tileview_create(lv_obj_t * parent);
 
 bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data);
+
+
 
 
 
@@ -108,8 +122,6 @@ void radio_display_init(){
 
   tft.fillScreen(TFT_BLUE);
   tft.pushImage(60, 15, mhWidth, mhHeight, mh); 
-
-
   
   lv_init();
   my_lv_drivers_init();
@@ -119,7 +131,7 @@ void radio_display_init(){
 void lv_radio_encoder(void)
 {
     g = lv_group_create();
-    lv_group_set_focus_cb(g, focus_cb);
+    //lv_group_set_focus_cb(g, focus_cb);
 
 #if LV_EX_KEYBOARD
     lv_indev_drv_t kb_drv;
@@ -150,35 +162,154 @@ void lv_radio_encoder(void)
   lv_indev_set_group(enc_indev, g);
 
 
-    /*Create a window*/
-    win = lv_page_create(lv_scr_act(), NULL);
-    //lv_win_set_title(win, "Window title");                        /*Set the title*/
-    lv_obj_set_pos(win, LV_DPX(10), LV_DPX(10));
-    /*Add control button to the header*/
-    //lv_obj_t * close_btn = lv_win_add_btn(win, LV_SYMBOL_CLOSE);           /*Add close button and use built-in close action*/
-    //lv_obj_set_event_cb(close_btn, lv_win_close_event_cb);
-    lv_win_add_btn(win, LV_SYMBOL_SETTINGS);        /*Add a setup button*/
-
-    lv_win_set_scrollbar_mode(win, LV_SCRLBAR_MODE_ON);
+  /*Create a window*/
+  win = lv_page_create(lv_scr_act(), NULL);
 
 
-    //t1 = lv_tabview_add_tab(tv, "Selectors");
-
-    //lv_group_add_obj(g);
+  tileview_create(win);
 
 
-    tabview_create(win);
+}
 
-  tv = lv_tabview_create(lv_scr_act(), NULL);
 
-  t1 = lv_tabview_add_tab(tv, "Selectors");
 
-  lv_obj_t * labe;
-  labe = lv_label_create(t1, NULL);
-  lv_label_set_text(labe, "Short text");
+static void btn_vol_event_cb(lv_obj_t * btn, lv_event_t event)
+{
 
-  lv_group_add_obj(g, tv);
-  lv_group_add_obj(g, t1);
+    Serial.println("Im in vol event!");
+    Serial.println(event);
+    if(event == LV_EVENT_KEY) {
+
+        //vol_msgbox_create();
+    }
+}
+
+static void btn_sett_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    if(event == LV_EVENT_KEY) {
+
+        //sett_msgbox_create();
+    }
+}
+
+
+static void tileview_create(lv_obj_t * parent)
+{
+
+    static lv_point_t valid_pos[] = {{0,0}, {1, 0}, {2,0}};
+    tileview = lv_tileview_create(lv_scr_act(), NULL);
+    lv_tileview_set_valid_positions(tileview, valid_pos, 3);
+    lv_tileview_set_edge_flash(tileview, true);
+
+    lv_page_set_scrlbar_mode(tileview, LV_SCROLLBAR_MODE_ON);
+    lv_tileview_set_tile_act(tileview, 0, 0, LV_ANIM_ON);
+    
+    //lv_group_add_obj(g, tileview);
+    //lv_obj_set_event_cb(tileview, tv_event_cb);
+
+    tile_objs.tile_vol = lv_obj_create(tileview, NULL);
+    lv_obj_set_size(tile_objs.tile_vol, 100, 100);
+    lv_obj_align(tile_objs.tile_vol, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
+    lv_tileview_add_element(tileview, tile_objs.tile_vol);
+    //lv_obj_set_event_cb(tile_objs.tile_vol, btn_vol_event_cb);
+
+    /* Now create the actual image */
+    lv_obj_t * img3 = lv_img_create(tile_objs.tile_vol, NULL);
+    lv_img_set_src(img3, &volume_sign);
+    //lv_obj_set_size(img3, 300, 300);   
+    lv_obj_align(img3, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_img_set_pivot(img3, 50, 50); 
+
+    lv_group_add_obj(g, tile_objs.tile_vol);
+/*
+    lv_anim_t a3;
+    lv_anim_init(&a3);
+    lv_anim_set_var(&a3, img3);
+    lv_anim_set_exec_cb(&a3, (lv_anim_exec_xcb_t)lv_img_set_zoom);
+    lv_anim_set_values(&a3, 140, 150);
+    lv_anim_set_playback_time(&a3, 500);
+    lv_anim_set_repeat_count(&a3, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a3);
+
+*/
+    tile_objs.tile_sett = lv_obj_create(tileview, NULL);
+    lv_obj_set_size(tile_objs.tile_sett, 100, 100);
+    lv_obj_align(tile_objs.tile_sett,  tile_objs.tile_vol, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
+    lv_tileview_add_element(tileview, tile_objs.tile_sett);
+    lv_obj_set_event_cb(tile_objs.tile_sett, btn_sett_event_cb); 
+
+    /*Tile2: just a label*/
+    //label = lv_label_create(btn_sett, NULL);
+    /*
+    lv_label_set_text(label, "Settings");
+    lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0);*/
+
+    /* Now create the actual image */
+    // lv_obj_t * img = lv_img_create(tile_objs.tile_sett, NULL);
+    // lv_img_set_src(img, &img_cogwheel_argb);
+    // lv_obj_align(img, NULL, LV_ALIGN_CENTfER, 0, 0);
+    // lv_img_set_pivot(img, 50, 50);    /*Rotate around the top left corner*/
+
+    lv_group_add_obj(g, tile_objs.tile_sett);
+/*
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, img);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
+    lv_anim_set_values(&a, 0, 3600);
+    lv_anim_set_time(&a, 8000);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a);*/
+/*
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_zoom);
+    lv_anim_set_values(&a, 128, 256);
+    lv_anim_set_playback_time(&a, 3000);
+    lv_anim_start(&a);*/
+
+   
+    tile_objs.tile_wifi = lv_obj_create(tileview, NULL);
+    lv_obj_set_size(tile_objs.tile_wifi, 100, 100);
+    lv_obj_align(tile_objs.tile_wifi, tile_objs.tile_sett, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
+    lv_tileview_add_element(tileview, tile_objs.tile_wifi);
+
+    /* Now create the actual image */
+    lv_obj_t * img2 = lv_img_create(tile_objs.tile_wifi, NULL);
+    lv_img_set_src(img2, &wifi_sign);
+    lv_obj_align(img2, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_img_set_pivot(img2, 50, 50);    /*Rotate around the top left corner*/
+
+    lv_group_add_obj(g, tile_objs.tile_wifi);
+/*
+    lv_anim_t a2;
+    lv_anim_init(&a2);
+    lv_anim_set_var(&a2, img2);
+    lv_anim_set_exec_cb(&a2, (lv_anim_exec_xcb_t)lv_img_set_zoom);
+    lv_anim_set_values(&a2, 232, 248);
+    lv_anim_set_playback_time(&a2, 500);
+    lv_anim_set_repeat_count(&a2, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a2);
+
+*/
+
+    
+    /*
+   selector_objs.btn_vol = lv_btn_create(parent, NULL);
+   lv_obj_set_pos(selector_objs.btn_vol, 10, 10);                            //Set its position
+    lv_obj_set_size(selector_objs.btn_vol, 200, 90);                          //Set its size
+    lv_obj_set_event_cb(selector_objs.btn_vol, btn_vol_event_cb);             //Assign a callback to the button
+
+   lv_obj_t * label = lv_label_create(selector_objs.btn_vol, NULL);
+   lv_label_set_text(label, "Volume");
+   
+
+    selector_objs.btn_sett = lv_btn_create(parent, NULL);
+    lv_obj_set_pos(selector_objs.btn_sett, 10, 10);                            //Set its position
+    lv_obj_set_size(selector_objs.btn_sett, 200, 90);                          //Set its size
+    lv_obj_set_event_cb(selector_objs.btn_sett, btn_sett_event_cb);            //Assign a callback to the button
+
+
+   lv_obj_t * label2 = lv_label_create(selector_objs.btn_sett, NULL);
+   lv_label_set_text(label2, "Settings");*/
 
 }
 
@@ -196,47 +327,83 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
 {
 
 
-  data->enc_diff = rotary_loop();
+    static int old_enc_val = 0;
+    int encoderd = rotary_loop();
 
-  if(get_button_clicked_state()) data->state = LV_INDEV_STATE_PR;
-  else data->state = LV_INDEV_STATE_REL;
-
-  return false; /*No buffering now so no more data read*/
-
-
-  /*
-    encoderData* encoderData = get_encoder_data();
     //Serial.print("Read Encoder daata");
-    if(encoderData->pushed)
+    if(get_button_clicked_state())
     {
       Serial.println("Clicked, lvgl");
       set_button_clicked_state(false);
       data->state = LV_INDEV_STATE_REL;
         data->key = LV_KEY_ENTER;
         lv_group_send_data(g,data->key);
-
-      encoderData->pushed = false;
     }
     else {
         //data->state = LV_INDEV_STATE_REL;
-        
     }
     
-    if(encoderData->rotated)
+    if(encoderd)
     {
-      int encoder_val  = encoderData->roationDelta;
-      data->enc_diff = encoder_val;
+      // int encoder_val  = encoderData->roationDelta;
+      data->enc_diff = encoderd-old_enc_val;
       Serial.print("Rotated, lvgl:");
-      Serial.print(encoder_val);
-      encoderData->rotated = false;
-      data->key = LV_KEY_NEXT;
+      Serial.print(encoderd);
+    
+      if((encoderd-old_enc_val) > 0){
+        Serial.println("left");
+        //data->key = LV_KEY_NEXT;
+        
+      }
+      else 
+      {
+        Serial.println("right");
+        //data->key = LV_KEY_PREV;
+      }
+
+      old_enc_val = encoderd;
+        //data->key = LV_KEY_NEXT;
     }
 
-    return false;*/
+    return false;
 }
+/*
 
+
+void tv_event_cb(lv_obj_t * tv, lv_event_t e)
+{
+    Serial.println("tv event fist");
+    lv_coord_t x, y;
+    lv_tileview_get_tile_act(tileview, &x, &y);
+
+    if(e == LV_EVENT_VALUE_CHANGED || e == LV_EVENT_REFRESH) {
+      Serial.println("tv event");
+
+    }
+
+}
 
 static void focus_cb(lv_group_t * group)
 {
     lv_obj_t * obj = lv_group_get_focused(group);
+    if(obj != tileview) {
+      lv_coord_t x, y;
+      lv_tileview_get_tile_act(tileview, &x, &y);
+        switch(x) {
+        case 0:
+            //lv_page_focus(tileview, tile_objs.tile_sett, LV_ANIM_ON);
+            //erial.println("fist tile");
+            break;
+        case 1:
+            //lv_page_focus(tileview, tile_objs.tile_vol, LV_ANIM_ON);
+            //Serial.println("2nd tile");
+            break;
+        case 2:
+            //lv_page_focus(tileview, tile_objs.tile_wifi, LV_ANIM_ON);
+            //Serial.println("3rd tile");
+            break;
+        }
+    }
 }
+
+*/
