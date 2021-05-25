@@ -8,6 +8,8 @@
 #include <hm_radio.h>
 
 
+Hmradio our_radio(10);
+
 #define TFT_GREY 0x5AEB
 
 TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
@@ -26,17 +28,33 @@ struct {
     lv_obj_t * tile_wifi;
 }tile_objs;
 
+struct {
+  lv_obj_t * vol_label;
+  lv_obj_t * slider;
+}vol_msg_objs;
+
+lv_obj_t * mbox;
+
 LV_IMG_DECLARE(wifi_sign);
 LV_IMG_DECLARE(volume_sign);
 
 static void focus_cb(lv_group_t * g);
 static void tv_event_cb(lv_obj_t * tv, lv_event_t e);
 
+
+static void vol_msgbox_event_cb(lv_obj_t * mbox, lv_event_t e);
+static void slider_event_cb(lv_obj_t * slider, lv_event_t event);
+static void btn_vol_event_cb(lv_obj_t * btn, lv_event_t event);
+static void opa_anim(void * bg, lv_anim_value_t v);
+
+static void vol_msgbox_create(void);
+
+
 static void tileview_create(lv_obj_t * parent);
 
 bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data);
 
-
+lv_indev_t * enc_indev;
 
 
 
@@ -45,9 +63,6 @@ float sdeg=0, mdeg=0, hdeg=0;
 uint16_t osx=120, osy=120, omx=120, omy=120, ohx=120, ohy=120;  // Saved H, M, S x & y coords
 uint16_t x0=0, x1=0, yy0=0, yy1=0;
 uint32_t targetTime = 0;                    // for next 1 second timeout
-
-Hmradio our_radio(50);
-
 
 static uint8_t conv2d(const char* p); // Forward declaration needed for IDE 1.6.x
 uint8_t hh=conv2d(__TIME__), mm=conv2d(__TIME__+3), ss=conv2d(__TIME__+6);  // Get H, M, S from compile time
@@ -158,7 +173,7 @@ void lv_radio_encoder(void)
 
   /*This function will be called periodically (by the library) to get the mouse position and state*/
   enc_drv.read_cb = my_encoder_read;
-  lv_indev_t * enc_indev = lv_indev_drv_register(&enc_drv);
+  enc_indev = lv_indev_drv_register(&enc_drv);
   lv_indev_set_group(enc_indev, g);
 
 
@@ -168,28 +183,6 @@ void lv_radio_encoder(void)
 
   tileview_create(win);
 
-
-}
-
-
-
-static void btn_vol_event_cb(lv_obj_t * btn, lv_event_t event)
-{
-
-    Serial.println("Im in vol event!");
-    Serial.println(event);
-    if(event == LV_EVENT_KEY) {
-
-        //vol_msgbox_create();
-    }
-}
-
-static void btn_sett_event_cb(lv_obj_t * btn, lv_event_t event)
-{
-    if(event == LV_EVENT_KEY) {
-
-        //sett_msgbox_create();
-    }
 }
 
 
@@ -211,7 +204,7 @@ static void tileview_create(lv_obj_t * parent)
     lv_obj_set_size(tile_objs.tile_vol, 100, 100);
     lv_obj_align(tile_objs.tile_vol, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
     lv_tileview_add_element(tileview, tile_objs.tile_vol);
-    //lv_obj_set_event_cb(tile_objs.tile_vol, btn_vol_event_cb);
+    lv_obj_set_event_cb(tile_objs.tile_vol, btn_vol_event_cb);
 
     /* Now create the actual image */
     lv_obj_t * img3 = lv_img_create(tile_objs.tile_vol, NULL);
@@ -236,7 +229,7 @@ static void tileview_create(lv_obj_t * parent)
     lv_obj_set_size(tile_objs.tile_sett, 100, 100);
     lv_obj_align(tile_objs.tile_sett,  tile_objs.tile_vol, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
     lv_tileview_add_element(tileview, tile_objs.tile_sett);
-    lv_obj_set_event_cb(tile_objs.tile_sett, btn_sett_event_cb); 
+    //lv_obj_set_event_cb(tile_objs.tile_sett, btn_sett_event_cb); 
 
     /*Tile2: just a label*/
     //label = lv_label_create(btn_sett, NULL);
@@ -315,6 +308,151 @@ static void tileview_create(lv_obj_t * parent)
 
 
 
+static void btn_vol_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    Serial.println("in volevent");
+    Serial.println(event);
+    if(event == LV_EVENT_KEY) {
+
+        vol_msgbox_create();
+    }
+}
+
+
+static lv_style_t style_modal;
+static void vol_msgbox_create(void){
+  /* Create a base object for the modal background */
+
+  lv_obj_t *obj = lv_obj_create(lv_scr_act(), NULL);
+  lv_obj_reset_style_list(obj, LV_OBJ_PART_MAIN);
+  lv_obj_add_style(obj, LV_OBJ_PART_MAIN, &style_modal);
+  lv_obj_set_pos(obj, 0, 0);
+  lv_obj_set_size(obj, LV_HOR_RES, LV_VER_RES);
+
+  static const char * btns2[] = {"Ok", "Cancel", ""};
+
+    /* Create the message box as a child of the modal background */
+    mbox = lv_msgbox_create(obj, NULL);
+    lv_msgbox_add_btns(mbox, btns2);
+    lv_msgbox_set_text(mbox, "Set the volume!");
+    lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_event_cb(mbox, vol_msgbox_event_cb);
+
+      /* Create a slider in the center of the display */
+    vol_msg_objs.slider= lv_slider_create(mbox, NULL);
+    lv_obj_set_width(vol_msg_objs.slider, 200);                        /*Set the width*/
+    lv_obj_align(vol_msg_objs.slider, NULL, LV_ALIGN_CENTER, 0, 0);    /*Align to the center of the parent (screen)*/
+    lv_slider_set_range(vol_msg_objs.slider, 0 , 20);
+    lv_slider_set_value(vol_msg_objs.slider, our_radio.get_cur_volume(), LV_ANIM_ON);    
+
+    lv_obj_set_event_cb(vol_msg_objs.slider, slider_event_cb);         /*Assign an event function*/
+
+    vol_msg_objs.vol_label = lv_label_create(mbox, NULL);
+    char buffer [50];
+    sprintf(buffer, "%d", our_radio.get_cur_volume());
+    lv_label_set_text(vol_msg_objs.vol_label, buffer);
+    lv_obj_set_auto_realign(vol_msg_objs.slider, true);                          /*To keep center alignment when the width of the text changes*/
+    lv_obj_align(vol_msg_objs.vol_label, vol_msg_objs.slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 20);    /*Align below the slider*/
+
+
+    //lv_group_remove_all_objs(g);
+
+    lv_group_add_obj(g, mbox);
+    lv_group_add_obj(g, vol_msg_objs.slider);
+    lv_group_focus_obj(vol_msg_objs.slider);
+
+    //lv_page_focus(mbox, vol_msg_objs.slider, LV_ANIM_ON);
+    lv_group_set_editing(g, true);
+    #if LV_EX_MOUSEWHEEL
+        lv_group_set_editing(g, true);
+    #endif
+        lv_group_focus_freeze(g, true);
+
+    /* Fade the message box in with an animation */
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, obj);
+    lv_anim_set_time(&a, 500);
+    lv_anim_set_values(&a, LV_OPA_TRANSP, LV_OPA_50);
+    //lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)opa_anim);
+    lv_anim_start(&a);
+
+    //lv_label_set_text(info, in_msg_info);
+    //lv_obj_align(info, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 5, -5);
+}
+
+// static void opa_anim(void * bg, lv_anim_value_t v)
+// {
+//     lv_obj_set_style_local_bg_opa(bg, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, v);
+// }
+
+    //#if LV_EX_MOUSEWHEEL
+    //lv_group_set_editing(g, true);
+    //#endif
+    //lv_group_focus_freeze(g, true);
+
+    /* Create a slider in the center of the display */
+    // vol_msg_objs.slider = lv_slider_create(mbox, NULL);
+    // lv_obj_set_width(vol_msg_objs.slider, 200);                        /*Set the width*/
+    // lv_obj_align(vol_msg_objs.slider, NULL, LV_ALIGN_CENTER, 0, 0);    /*Align to the center of the parent (screen)*/
+    // lv_obj_set_event_cb(vol_msg_objs.slider, slider_event_cb);         /*Assign an event function*/
+
+    // /* Create a label below the slider */
+    // vol_msg_objs.vol_label = lv_label_create(mbox, NULL);
+    // lv_label_set_text(vol_msg_objs.vol_label, "0");
+    // lv_obj_set_auto_realign(vol_msg_objs.slider, true);                          /*To keep center alignment when the width of the text changes*/
+    // lv_obj_align(vol_msg_objs.vol_label, vol_msg_objs.slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 20);    /*Align below the slider*/
+
+    // static const char * btns[] = {"Ok", "Cancel", ""};
+    // lv_msgbox_add_btns(mbox, btns);
+    // lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
+/*
+    lv_obj_set_style_local_bg_opa(lv_layer_top(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_70);
+    lv_obj_set_style_local_bg_color(lv_layer_top(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
+    lv_obj_set_click(lv_layer_top(), true);
+}*/
+
+static void slider_event_cb(lv_obj_t * slider, lv_event_t event)
+{
+    Serial.println(event);
+    if(event == LV_EVENT_VALUE_CHANGED) {
+
+        
+        lv_label_set_text_fmt(vol_msg_objs.vol_label, "%d", lv_slider_get_value(slider));
+    }
+    else if(event == LV_EVENT_KEY) {
+
+        our_radio.set_cur_volume(lv_slider_get_value(slider));
+
+      lv_group_focus_obj(vol_msg_objs.slider);
+
+      //lv_page_focus(mbox, vol_msg_objs.slider, LV_ANIM_ON);
+      lv_group_set_editing(g, false);
+      lv_group_focus_freeze(g, false);
+
+      lv_group_remove_obj(vol_msg_objs.slider);
+      lv_group_remove_obj(mbox);
+      lv_msgbox_start_auto_close(mbox, 0);
+
+    }
+}
+
+
+static void vol_msgbox_event_cb(lv_obj_t * mbox, lv_event_t e)
+{
+  if(e == LV_EVENT_VALUE_CHANGED) {
+  }
+}
+static void btn_sett_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    if(event == LV_EVENT_KEY) {
+
+        //sett_msgbox_create();
+    }
+}
+
+
+
 static uint8_t conv2d(const char* p) {
   uint8_t v = 0;
   if ('0' <= *p && *p <= '9')
@@ -330,17 +468,14 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
     static int16_t old_enc_val = 0;
     int16_t encoderd = rotary_loop();
 
-    Serial.print("old val:");
-    Serial.println(old_enc_val);
-
     //Serial.print("Read Encoder daata");
     if(get_button_clicked_state())
     {
       Serial.println("Clicked, lvgl");
       set_button_clicked_state(false);
       data->state = LV_INDEV_STATE_REL;
-        data->key = LV_KEY_ENTER;
-        lv_group_send_data(g,data->key);
+      data->key = LV_KEY_ENTER;
+      lv_group_send_data(g,data->key);
     }
     else {
         //data->state = LV_INDEV_STATE_REL;
@@ -362,13 +497,16 @@ bool my_encoder_read(lv_indev_drv_t * indev, lv_indev_data_t * data)
     
       if((encoderd-old_enc_val) > 0){
         Serial.println("left");
-        //data->key = LV_KEY_NEXT;
+        
+        data->key = LV_KEY_LEFT;
+        lv_group_send_data(g,data->key);
         
       }
       else 
       {
         Serial.println("right");
-        //data->key = LV_KEY_PREV;
+        data->key = LV_KEY_RIGHT;
+        lv_group_send_data(g,data->key);
       }
 
       old_enc_val = encoderd;

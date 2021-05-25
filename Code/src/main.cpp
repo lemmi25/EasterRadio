@@ -163,7 +163,7 @@ void loop() {
   //   }
   //   Serial.println("]");
   // }
-    // writeBit works just like digitalWrite
+   // writeBit works just like digitalWrite
   /*
     uint16_t result = mcp3221.read();
 
@@ -174,8 +174,8 @@ void loop() {
     */
 
   lv_task_handler();
-  delay(10);
-  lv_tick_inc(10);
+  delay(5);
+  lv_tick_inc(5);
 }
 
 
